@@ -152,8 +152,8 @@ int bitXor(int x, int y) {
  *   Rating: 1
  */
 int tmin(void) {
-
-  return 2;
+  // 100...00
+  return 1<<31;
 
 }
 //2
@@ -165,7 +165,10 @@ int tmin(void) {
  *   Rating: 1
  */
 int isTmax(int x) {
-  return 2;
+  //the first quiz I DIY!Congratulations!
+  //sry...The'<<' can't be used,shit!
+  //return !((x^1<<31)+1);
+  return !(~(x+1)^x)&!!(x+1);
 }
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
@@ -176,7 +179,10 @@ int isTmax(int x) {
  *   Rating: 2
  */
 int allOddBits(int x) {
-  return 2;
+  int a=0xAA;
+  int b=(a<<8)|a;
+  int c=(b<<16)|b;
+  return !((x&c)^c);
 }
 /* 
  * negate - return -x 
@@ -186,7 +192,7 @@ int allOddBits(int x) {
  *   Rating: 2
  */
 int negate(int x) {
-  return 2;
+  return ~x+1;
 }
 //3
 /* 
@@ -199,7 +205,13 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  return 2;
+  //This is actually a DIY problem, nice.
+  int a=0x03;
+  int x_i=x>>4;
+  int y=x+6;
+  int y_i=y>>4;
+  return !(x_i^a)&!(y_i^a);
+  //return y_i;
 }
 /* 
  * conditional - same as x ? y : z 
@@ -209,7 +221,10 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-  return 2;
+  int a=!!(x^0x0);
+  int b=~a+1;
+  return (y&b)+(~b&z);
+  //return y&b+z&~b; ERROR 算术运算符的优先级高于&,|
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -219,7 +234,15 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+  int _x=~x+1;
+  int y_x=y+_x;
+  int del_sign=y_x>>31&1; //这里的&1！！注意有符号数的>>是算术右移
+  int Bit=1<<31;
+  int x_sign=x&Bit;
+  int y_sign=y&Bit;
+  int xor_sign=x_sign^y_sign;
+  xor_sign=xor_sign>>31&1;
+  return ((!xor_sign)&(!del_sign)|(xor_sign)&(x_sign>>31));
 }
 //4
 /* 
@@ -231,7 +254,9 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4 
  */
 int logicalNeg(int x) {
-  return 2;
+  //return !(x^0);
+  //利用0与-0的MSB均为0，而其他的x与-x的MSB相反
+  return ((x|(~x+1))>>31)+1; //+-的优先级比<< >>高，shit！
 }
 /* howManyBits - return the minimum number of bits required to represent x in
  *             two's complement
@@ -246,7 +271,21 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
-  return 0;
+  int b16,b8,b4,b2,b1,b0;
+  int sign=x>>31;
+  x = (sign&~x)|(~sign&x); //迷惑操作
+  b16 = !!(x>>16)<<4;
+  x = x>>b16;
+  b8 = !!(x>>8)<<3;
+  x = x>>b8;
+  b4 = !!(x>>4)<<2;
+  x = x>>b4;
+  b2 = !!(x>>2)<<1;
+  x = x>>b2;
+  b1 = !!(x>>1);
+  x = x>>b1;
+  b0 = x;
+  return b16+b8+b4+b2+b1+b0+1;//！！
 }
 //float
 /* 
@@ -261,7 +300,26 @@ int howManyBits(int x) {
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
-  return 2;
+  int exp=(uf&0x7f800000)>>23;//2-9
+  int sign=(uf>>31)&1;//1
+  int frac=(uf&0x7fffff);//o.w.
+  if(exp==0xff) return uf;
+  unsigned res=0;
+  if(exp==0)
+  {
+    //非规格化：由于exp都是0，直接<<uf都可以，加个符号位
+    //无脑左移会使frac的msb到exp上，恰好实现
+    //事实上刚好是成立的，这就是非规格的特性 
+    frac<<=1;
+    res=(sign<<31)|(exp<<23)|frac;
+  }
+  else
+  {
+    //都是1.xx，直接把exp加一就行
+    exp++;
+    res = (sign << 31) | (exp << 23) | frac;
+  }
+  return res;
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
@@ -276,7 +334,24 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-  return 2;
+  int exp=((uf&0x7f800000)>>23);//2-9
+  int e=exp-0x7f;
+  int sign=(uf>>31)&1;//1
+  int frac=(uf&0x7fffff);//o.w.
+  if(e<0) return 0;
+  if(e>=31)  return 0x80000000u;
+  //这里的e>=31我没有考虑到，是一个越界的问题，若e比31大，frac会覆盖到符号位
+  frac=frac|1<<23;//补1
+  if(e<23)
+  {
+    frac>>=(23-e);
+    //部分位被舍弃，只会保留前面的数字
+  }
+  else
+  {
+    frac<<=(e-23);
+  }
+  return sign?-frac:frac;
 }
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
@@ -292,5 +367,30 @@ int floatFloat2Int(unsigned uf) {
  *   Rating: 4
  */
 unsigned floatPower2(int x) {
-    return 2;
+  //copy
+  //本质上考察的是浮点数各个区域的取值范围
+  //norm：2^-126--2^127x(2-2^-23)
+  //denorm:2^-23x2^-126--(1-2^-23)x2^-126
+  //
+  if(x>127)
+  {
+    //比2^147还大就表示不出来了
+    return (0x7F8<<20); //+INF
+  }
+  else if(x<-148)
+  {
+    //比2^-148还小就表示不出来了
+    return 0;
+  }
+  else if(x>=-126)
+  {
+    int e=x+127;
+    return e<<23;
+  }
+  else
+  {
+    //均对应denorm，e=0，只变frac就好
+    int d=x+148;
+    return 1<<d;
+  }
 }
