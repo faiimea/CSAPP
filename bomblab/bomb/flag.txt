@@ -1,0 +1,6 @@
+Border relations with Canada have never been better.
+1 2 4 8 16 32
+0 207
+7 0
+ionefg
+4 3 2 1 6 5(对我来说有点太难了...所以先skip，之后有时间再好好研究下)
