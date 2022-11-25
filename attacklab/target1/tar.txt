@@ -2,4 +2,6 @@ ctarget:
 1
 900 <test>
 787 <touch1> 4017c0
+798 <touch2> 4017ec
 777 <getbuf>
+<touch3> 4018fa

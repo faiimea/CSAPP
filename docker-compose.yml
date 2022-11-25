@@ -6,3 +6,4 @@ services:
     volumes:
       - .:/csapp_lab
     tty: true
+    privileged: true
