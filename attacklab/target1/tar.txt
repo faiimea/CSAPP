@@ -5,3 +5,4 @@ ctarget:
 798 <touch2> 4017ec
 777 <getbuf>
 <touch3> 4018fa
+402b18 -> pop rdi ret
